@@ -23,7 +23,7 @@ class AdminMiddleware
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
-        if ($user->role !== UserRole::ADMIN) {
+        if ($user->role !== 'admin') {
             return response()->json([
                 'message' => 'Forbidden',
                 'role' => $user->role
