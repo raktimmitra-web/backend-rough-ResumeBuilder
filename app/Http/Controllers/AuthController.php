@@ -34,6 +34,8 @@ class AuthController extends Controller
             'last_login_at' => now(),
         ]);
         
+        $user->refresh();
+
         return response()->json([
             'message' => 'Registration successful',
             'user'    => $user,

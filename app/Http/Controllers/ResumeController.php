@@ -6,6 +6,7 @@ use App\Http\Requests\ResumeFormRequest;
 use App\Http\Requests\StoreResumeRequest;
 use App\Http\Resources\ResumeResource;
 use App\Models\Resume;
+use App\Services\ResumeCompletionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -14,18 +15,37 @@ class ResumeController extends Controller
     /* ======================
         LIST RESUMES
     ====================== */
-    public function index(Request $request)
+   public function index(Request $request)
     {
         $resumes = $request->user()
             ->resumes()
+            ->with([
+                'personalDetails',
+                'education',
+                'experiences',
+                'projects',
+                'certifications',
+                'socials',
+            ])
             ->latest('updated_at')
-            ->get(['id', 'title', 'template', 'updated_at']);
+            ->get();
+
+        $resumes = $resumes->map(function ($resume) {
+            return [
+                'id' => $resume->id,
+                'title' => $resume->title,
+                'template' => $resume->template,
+                'updated_at' => $resume->updated_at,
+                'completion' => ResumeCompletionService::calculate($resume),
+            ];
+        });
 
         return response()->json([
             'success' => true,
-            'data' => $resumes
+            'data' => $resumes,
         ]);
     }
+
 
     /* ======================
         SHOW RESUME
@@ -70,93 +90,93 @@ class ResumeController extends Controller
         UPDATE RESUME
     ====================== */
     public function update(ResumeFormRequest $request, string $id)
-{
-    $resume = $request->user()
-        ->resumes()
-        ->findOrFail($id);
+    {
+        $resume = $request->user()
+            ->resumes()
+            ->findOrFail($id);
 
-    $data = $request->validated();
+        $data = $request->validated();
 
-    DB::transaction(function () use ($resume, $data) {
+        DB::transaction(function () use ($resume, $data) {
 
-        /* ======================
-           CORE FIELDS (ONLY IF SENT)
-        ====================== */
-        $coreFields = [];
+            /* ======================
+            CORE FIELDS (ONLY IF SENT)
+            ====================== */
+            $coreFields = [];
 
-        if (array_key_exists('title', $data)) {
-            $coreFields['title'] = $data['title'];
-        }
+            if (array_key_exists('title', $data)) {
+                $coreFields['title'] = $data['title'];
+            }
 
-        if (array_key_exists('summary', $data)) {
-            $coreFields['summary'] = $data['summary'];
-        }
+            if (array_key_exists('summary', $data)) {
+                $coreFields['summary'] = $data['summary'];
+            }
 
-        if (array_key_exists('skills', $data)) {
-            $coreFields['skills'] = $data['skills'];
-        }
+            if (array_key_exists('skills', $data)) {
+                $coreFields['skills'] = $data['skills'];
+            }
 
-        if (array_key_exists('languages', $data)) {
-            $coreFields['languages'] = $data['languages'];
-        }
+            if (array_key_exists('languages', $data)) {
+                $coreFields['languages'] = $data['languages'];
+            }
 
-        if (array_key_exists('accent_color', $data)) {
-            $coreFields['accent_color'] = $data['accent_color'];
-        }
+            if (array_key_exists('accent_color', $data)) {
+                $coreFields['accent_color'] = $data['accent_color'];
+            }
 
-        if (array_key_exists('template', $data)) {
-            $coreFields['template'] = $data['template'];
-        }
+            if (array_key_exists('template', $data)) {
+                $coreFields['template'] = $data['template'];
+            }
 
-        if (!empty($coreFields)) {
-            $resume->update($coreFields);
-        }
+            if (!empty($coreFields)) {
+                $resume->update($coreFields);
+            }
 
-        /* ======================
-           PERSONAL DETAILS (hasOne)
-        ====================== */
-        if (array_key_exists('personal_details', $data)) {
-            $resume->personalDetails()->updateOrCreate(
-                [],
-                $data['personal_details'] ?? []
-            );
-        }
+            /* ======================
+            PERSONAL DETAILS (hasOne)
+            ====================== */
+            if (array_key_exists('personal_details', $data)) {
+                $resume->personalDetails()->updateOrCreate(
+                    [],
+                    $data['personal_details'] ?? []
+                );
+            }
 
-        /* ======================
-           SOCIALS (hasOne)
-        ====================== */
-        if (array_key_exists('socials', $data)) {
-            $resume->socials()->updateOrCreate(
-                [],
-                $data['socials'] ?? []
-            );
-        }
+            /* ======================
+            SOCIALS (hasOne)
+            ====================== */
+            if (array_key_exists('socials', $data)) {
+                $resume->socials()->updateOrCreate(
+                    [],
+                    $data['socials'] ?? []
+                );
+            }
 
-        /* ======================
-           HAS MANY SECTIONS
-           ✅ Only sync if that section is sent
-        ====================== */
-        if (array_key_exists('projects', $data)) {
-            $this->syncHasMany($resume, 'projects', $data['projects'] ?? []);
-        }
+            /* ======================
+            HAS MANY SECTIONS
+            ✅ Only sync if that section is sent
+            ====================== */
+            if (array_key_exists('projects', $data)) {
+                $this->syncHasMany($resume, 'projects', $data['projects'] ?? []);
+            }
 
-        if (array_key_exists('experiences', $data)) {
-            $this->syncHasMany($resume, 'experiences', $data['experiences'] ?? []);
-        }
+            if (array_key_exists('experiences', $data)) {
+                $this->syncHasMany($resume, 'experiences', $data['experiences'] ?? []);
+            }
 
-        if (array_key_exists('education', $data)) {
-            $this->syncHasMany($resume, 'education', $data['education'] ?? []);
-        }
+            if (array_key_exists('education', $data)) {
+                $this->syncHasMany($resume, 'education', $data['education'] ?? []);
+            }
 
-        if (array_key_exists('certifications', $data)) {
-            $this->syncHasMany($resume, 'certifications', $data['certifications'] ?? []);
-        }
-    });
+            if (array_key_exists('certifications', $data)) {
+                $this->syncHasMany($resume, 'certifications', $data['certifications'] ?? []);
+            }
+        });
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Resume updated successfully',
-    ]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Resume updated successfully',
+        ]);
 }
 
 

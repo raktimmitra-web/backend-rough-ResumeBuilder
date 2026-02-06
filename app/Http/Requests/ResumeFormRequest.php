@@ -18,10 +18,10 @@ class ResumeFormRequest extends FormRequest
            // CORE
         'title' => 'sometimes|required|string|min:5|max:255',
         'summary' => 'sometimes|required|string|min:10|max:1500',
-        'skills' => 'sometimes|required|array|min:1',
+        'skills' => 'sometimes|nullable|array',
         'skills.*' => 'string|min:2|max:50',
 
-        'languages' => 'sometimes|required|array|min:1',
+        'languages' => 'sometimes|nullable|array',
         'languages.*.name' => 'required|string|min:2',
         'languages.*.level' => 'required|string|in:basic,intermediate,fluent,native',
 
@@ -49,8 +49,8 @@ class ResumeFormRequest extends FormRequest
         'projects.*.start_date' => 'sometimes|nullable|date',
         'projects.*.end_date' => 'sometimes|nullable|date|after_or_equal:projects.*.start_date',
 
-        'projects.*.live_link' => 'sometimes|nullable|url',
-        'projects.*.github_link' => 'sometimes|nullable|url',
+        'projects.*.live_link' => 'sometimes|nullable|string',
+        'projects.*.github_link' => 'sometimes|nullable|string',
 
 
         // EXPERIENCES
@@ -78,13 +78,13 @@ class ResumeFormRequest extends FormRequest
         'certifications.*.title' => 'required|string|max:255',
         'certifications.*.issuer' => 'required|string|max:255',
         'certifications.*.issued_date' => 'sometimes|nullable|date',
-        'certifications.*.url' => 'sometimes|nullable|url',
+        'certifications.*.url' => 'sometimes|nullable|string',
         // SOCIALS
         'socials' => 'sometimes|nullable|array',
-        'socials.linkedin' => 'nullable|url',
-        'socials.github' => 'nullable|url',
-        'socials.portfolio' => 'nullable|url',
-        'socials.twitter' => 'nullable|url',
+        'socials.linkedin' => 'nullable|string',
+        'socials.github' => 'nullable|string',
+        'socials.portfolio' => 'nullable|string',
+        'socials.twitter' => 'nullable|string',
         ];
     }
 }
