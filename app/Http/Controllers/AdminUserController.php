@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class AdminUserController extends Controller
 {
@@ -84,5 +85,29 @@ class AdminUserController extends Controller
             ->update(['status' => 'suspended']);
 
         return response()->json(['success' => true]);
+    }
+
+    public function addAdminUser(Request $request){
+          $fields = $request->validate([
+        'username' => 'required|string|max:50|unique:users,username',
+        'name'     => 'required|string|max:100',
+        'email'    => 'required|email|unique:users,email',
+        'password' => 'required|string|min:6',
+        'role'     => 'required|in:user,admin',
+    ]);
+
+    $user = User::create([
+        'username' => $fields['username'],
+        'name'     => $fields['name'],
+        'email'    => $fields['email'],
+        'password' => Hash::make($fields['password']),
+        'role'     => $fields['role'],
+        'status'   => 'active', // Set default status
+    ]);
+
+    return response()->json([
+        'message' => 'User created successfully',
+        'user'    => new UserResource($user),
+    ], 201);
     }
 }

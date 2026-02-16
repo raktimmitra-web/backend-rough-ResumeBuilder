@@ -37,7 +37,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::put('/users/{id}', [AdminUserController::class, 'update']);
     Route::delete('/users/{id}', [AdminUserController::class, 'destroy']);
     Route::post('/users/bulk-suspend', [AdminUserController::class, 'bulkSuspend']);
-    
+    Route::post('/users/add', [AdminUserController::class, 'addAdminUser']);
     //resume related routes for admin
 
     Route::get('/resumes', [AdminResumeController::class, 'index']);
