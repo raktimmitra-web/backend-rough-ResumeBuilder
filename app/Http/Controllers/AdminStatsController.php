@@ -27,6 +27,8 @@ class AdminStatsController extends Controller
             'suspended' => User::where('status', 'suspended')->count(),
 
             'activity_chart' => $this->getLoginActivity(),
+
+            'template_usage' => $this->getTemplateUsage(),
         ];
     }
     
@@ -52,6 +54,22 @@ class AdminStatsController extends Controller
 
         return $data;
     }
+    
+     private function getTemplateUsage()
+    {
+        // Get count of resumes grouped by template
+        $templateStats = Resume::selectRaw('template, COUNT(*) as count')
+            ->groupBy('template')
+            ->orderBy('count', 'desc')
+            ->get();
 
+        // Transform the data for frontend pie chart
+        return $templateStats->map(function ($stat) {
+            return [
+                'template' => $stat->template ?? 'Unknown', // Handle null templates
+                'count' => $stat->count,
+            ];
+        })->toArray();
+    }
 
 }
