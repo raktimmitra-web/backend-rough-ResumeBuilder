@@ -94,20 +94,38 @@ class AdminUserController extends Controller
         'email'    => 'required|email|unique:users,email',
         'password' => 'required|string|min:6',
         'role'     => 'required|in:user,admin',
-    ]);
+        ]);
 
-    $user = User::create([
-        'username' => $fields['username'],
-        'name'     => $fields['name'],
-        'email'    => $fields['email'],
-        'password' => Hash::make($fields['password']),
-        'role'     => $fields['role'],
-        'status'   => 'active', // Set default status
-    ]);
+        $user = User::create([
+            'username' => $fields['username'],
+            'name'     => $fields['name'],
+            'email'    => $fields['email'],
+            'password' => Hash::make($fields['password']),
+            'role'     => $fields['role'],
+            'status'   => 'active', // Set default status
+        ]);
 
-    return response()->json([
-        'message' => 'User created successfully',
-        'user'    => new UserResource($user),
-    ], 201);
+        return response()->json([
+            'message' => 'User created successfully',
+            'user'    => new UserResource($user),
+        ], 201);
+    }
+
+    public function changePassword(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'password'              => 'required|string|min:6',
+            'password_confirmation' => 'required|same:password',
+        ]);
+
+        $user->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        return response()->json([
+            'message' => 'Password updated successfully',
+        ]);
     }
 }
